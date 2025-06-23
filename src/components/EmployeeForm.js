@@ -52,25 +52,18 @@ const EmployeeForm = () => {
 
   useEffect(() => {
     if (isEditing) {
-      // Load employee data for editing (in real app, this would be an API call)
-      const sampleEmployee = {
-        id: parseInt(id),
-        name: 'John Doe',
-        email: 'john.doe@company.com',
-        phone: '+1 (555) 123-4567',
-        address: '123 Main St, City, State 12345',
-        department: 'Engineering',
-        position: 'Senior Developer',
-        hireDate: '2022-01-15',
-        salary: '85000',
-        status: 'Active',
-        emergencyContact: {
-          name: 'Jane Doe',
-          phone: '+1 (555) 987-6543',
-          relationship: 'Spouse'
-        }
-      };
-      setFormData(sampleEmployee);
+      fetch(`http://localhost:3001/employees`)
+        .then(res => res.json())
+        .then(data => {
+          const emp = data.find(e => e.id === parseInt(id));
+          if (emp) {
+            setFormData({
+              ...emp,
+              hireDate: emp.date_hired || '',
+              emergencyContact: emp.emergencyContact || { name: '', phone: '', relationship: '' },
+            });
+          }
+        });
     }
   }, [id, isEditing]);
 
@@ -118,14 +111,29 @@ const EmployeeForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
-      // In a real app, this would be an API call
-      console.log('Form submitted:', formData);
-      alert(isEditing ? 'Employee updated successfully!' : 'Employee added successfully!');
-      navigate('/');
+      try {
+        const url = isEditing
+          ? `http://localhost:3001/employees/${id}`
+          : 'http://localhost:3001/employees';
+        const method = isEditing ? 'PUT' : 'POST';
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            date_hired: formData.hireDate, // match backend field
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to save employee');
+        alert(isEditing ? 'Employee updated successfully!' : 'Employee added successfully!');
+        navigate('/');
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
     }
   };
 

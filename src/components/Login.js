@@ -14,27 +14,31 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     
     // Simple authentication for demo purposes
+    let userObj = null;
     if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      onLogin({
+      userObj = {
         id: 1,
         name: 'Admin User',
         role: 'admin',
         email: 'admin@company.com'
-      });
+      };
     } else if (credentials.username === 'hr' && credentials.password === 'hr123') {
-      onLogin({
+      userObj = {
         id: 2,
         name: 'HR Manager',
         role: 'hr',
         email: 'hr@company.com'
-      });
+      };
     } else if (credentials.username === 'employee' && credentials.password === 'emp123') {
-      onLogin({
+      userObj = {
         id: 3,
         name: 'John Employee',
         role: 'employee',
         email: 'john@company.com'
-      });
+      };
+    }
+    if (userObj) {
+      onLogin(userObj);
     } else {
       setError('Invalid credentials. Try admin/admin123, hr/hr123, or employee/emp123');
     }

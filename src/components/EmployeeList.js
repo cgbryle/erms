@@ -13,54 +13,17 @@ const EmployeeList = () => {
 
   // Sample data for demonstration
   useEffect(() => {
-    const sampleEmployees = [
-      {
-        id: 1,
-        name: 'John Doe',
-        email: 'john.doe@company.com',
-        phone: '+1 (555) 123-4567',
-        department: 'Engineering',
-        position: 'Senior Developer',
-        hireDate: '2022-01-15',
-        status: 'Active',
-        salary: 85000
-      },
-      {
-        id: 2,
-        name: 'Jane Smith',
-        email: 'jane.smith@company.com',
-        phone: '+1 (555) 234-5678',
-        department: 'Marketing',
-        position: 'Marketing Manager',
-        hireDate: '2021-08-20',
-        status: 'Active',
-        salary: 75000
-      },
-      {
-        id: 3,
-        name: 'Mike Johnson',
-        email: 'mike.johnson@company.com',
-        phone: '+1 (555) 345-6789',
-        department: 'HR',
-        position: 'HR Specialist',
-        hireDate: '2023-03-10',
-        status: 'Active',
-        salary: 65000
-      },
-      {
-        id: 4,
-        name: 'Sarah Wilson',
-        email: 'sarah.wilson@company.com',
-        phone: '+1 (555) 456-7890',
-        department: 'Finance',
-        position: 'Financial Analyst',
-        hireDate: '2022-11-05',
-        status: 'Active',
-        salary: 70000
-      }
-    ];
-    setEmployees(sampleEmployees);
-    setFilteredEmployees(sampleEmployees);
+    fetch('http://localhost:3001/employees')
+      .then(res => res.json())
+      .then(data => {
+        setEmployees(Array.isArray(data) ? data : []);
+        setFilteredEmployees(Array.isArray(data) ? data : []);
+      })
+      .catch(err => {
+        console.error('Failed to fetch employees:', err);
+        setEmployees([]);
+        setFilteredEmployees([]);
+      });
   }, []);
 
   // Filter and search functionality
@@ -69,9 +32,9 @@ const EmployeeList = () => {
 
     if (searchTerm) {
       filtered = filtered.filter(emp =>
-        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.department.toLowerCase().includes(searchTerm.toLowerCase())
+        (emp.name && emp.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (emp.email && emp.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (emp.department && emp.department.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -87,10 +50,17 @@ const EmployeeList = () => {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setEmployees(employees.filter(emp => emp.id !== employeeToDelete.id));
-    setShowDeleteModal(false);
-    setEmployeeToDelete(null);
+  const confirmDelete = async () => {
+    try {
+      await fetch(`http://localhost:3001/employees/${employeeToDelete.id}`, {
+        method: 'DELETE',
+      });
+      setEmployees(employees.filter(emp => emp.id !== employeeToDelete.id));
+      setShowDeleteModal(false);
+      setEmployeeToDelete(null);
+    } catch (error) {
+      alert('Failed to delete employee');
+    }
   };
 
   const departments = [...new Set(employees.map(emp => emp.department))];
@@ -166,23 +136,23 @@ const EmployeeList = () => {
                 <td>
                   <div className="employee-info">
                     <div className="employee-avatar">
-                      {employee.name.charAt(0)}
+                      {(employee.name && employee.name.charAt(0)) || '?'}
                     </div>
                     <div>
-                      <div className="employee-name">{employee.name}</div>
-                      <div className="employee-phone">{employee.phone}</div>
+                      <div className="employee-name">{employee.name || 'N/A'}</div>
+                      <div className="employee-phone">{employee.phone || ''}</div>
                     </div>
                   </div>
                 </td>
-                <td>{employee.email}</td>
+                <td>{employee.email || 'N/A'}</td>
                 <td>
-                  <span className="department-badge">{employee.department}</span>
+                  <span className="department-badge">{employee.department || 'N/A'}</span>
                 </td>
-                <td>{employee.position}</td>
-                <td>{new Date(employee.hireDate).toLocaleDateString()}</td>
+                <td>{employee.position || 'N/A'}</td>
+                <td>{employee.hireDate ? new Date(employee.hireDate).toLocaleDateString() : (employee.date_hired ? new Date(employee.date_hired).toLocaleDateString() : 'N/A')}</td>
                 <td>
-                  <span className={`status-badge ${employee.status.toLowerCase()}`}>
-                    {employee.status}
+                  <span className={`status-badge ${(employee.status || '').toLowerCase()}`}>
+                    {employee.status || 'N/A'}
                   </span>
                 </td>
                 <td>
