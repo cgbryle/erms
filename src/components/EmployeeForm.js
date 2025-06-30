@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, User, Mail, Phone, MapPin, Calendar, DollarSign } from 'lucide-react';
+import { Save, ArrowLeft, User, Mail, Phone, MapPin, Calendar, DollarSign, FileText, Plus, Upload, Trash2, AlertTriangle } from 'lucide-react';
 import './EmployeeForm.css';
 
 const EmployeeForm = () => {
@@ -26,6 +26,14 @@ const EmployeeForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [employeeDocuments, setEmployeeDocuments] = useState([]);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [documentData, setDocumentData] = useState({
+    documentType: '',
+    title: '',
+    expiryDate: '',
+    file: null
+  });
 
   // Sample departments for demo
   const departments = [
@@ -52,20 +60,51 @@ const EmployeeForm = () => {
 
   useEffect(() => {
     if (isEditing) {
-      fetch(`http://localhost:3001/employees`)
-        .then(res => res.json())
-        .then(data => {
-          const emp = data.find(e => e.id === parseInt(id));
-          if (emp) {
-            setFormData({
-              ...emp,
-              hireDate: emp.date_hired || '',
-              emergencyContact: emp.emergencyContact || { name: '', phone: '', relationship: '' },
-            });
-          }
-        });
+      fetchEmployeeData();
+      fetchEmployeeDocuments();
     }
   }, [id, isEditing]);
+
+  const fetchEmployeeData = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/employees`);
+      const data = await response.json();
+      const emp = data.find(e => e.id === parseInt(id));
+      if (emp) {
+        setFormData({
+          name: emp.name ?? '',
+          email: emp.email ?? '',
+          phone: emp.phone ?? '',
+          address: emp.address ?? '',
+          department: emp.department ?? '',
+          position: emp.position ?? '',
+          hireDate: emp.date_hired ?? '',
+          salary: emp.salary ?? '',
+          status: emp.status ?? 'Active',
+          emergencyContact: {
+            name: emp.emergencyContact?.name ?? '',
+            phone: emp.emergencyContact?.phone ?? '',
+            relationship: emp.emergencyContact?.relationship ?? ''
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch employee data:', error);
+    }
+  };
+
+  const fetchEmployeeDocuments = async () => {
+    if (!isEditing) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/employees/${id}/documents`);
+      const data = await response.json();
+      setEmployeeDocuments(data);
+    } catch (error) {
+      console.error('Failed to fetch employee documents:', error);
+      setEmployeeDocuments([]);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -134,6 +173,82 @@ const EmployeeForm = () => {
       } catch (error) {
         alert('Error: ' + error.message);
       }
+    }
+  };
+
+  const handleDocumentUpload = (e) => {
+    const file = e.target.files[0];
+    setDocumentData(prev => ({
+      ...prev,
+      file: file
+    }));
+  };
+
+  const handleDocumentSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const fileSize = documentData.file ? `${(documentData.file.size / (1024 * 1024)).toFixed(1)} MB` : '1.0 MB';
+      const fileName = documentData.file ? documentData.file.name : 'document.pdf';
+      
+      const response = await fetch('http://localhost:3001/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: parseInt(id),
+          documentType: documentData.documentType,
+          title: documentData.title,
+          fileName: fileName,
+          uploadDate: new Date().toISOString().split('T')[0],
+          expiryDate: documentData.expiryDate,
+          fileSize: fileSize
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to upload document');
+      
+      // Refresh documents
+      await fetchEmployeeDocuments();
+      
+      setShowDocumentModal(false);
+      setDocumentData({
+        documentType: '',
+        title: '',
+        expiryDate: '',
+        file: null
+      });
+      
+      alert('Document uploaded successfully!');
+    } catch (error) {
+      alert('Error uploading document: ' + error.message);
+    }
+  };
+
+  const handleDocumentDelete = async (documentId) => {
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      try {
+        const response = await fetch(`http://localhost:3001/documents/${documentId}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) throw new Error('Failed to delete document');
+        
+        // Refresh documents
+        await fetchEmployeeDocuments();
+        
+        alert('Document deleted successfully!');
+      } catch (error) {
+        alert('Error deleting document: ' + error.message);
+      }
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Valid': return 'valid';
+      case 'Expiring Soon': return 'warning';
+      case 'Expired': return 'expired';
+      default: return 'valid';
     }
   };
 
@@ -342,6 +457,74 @@ const EmployeeForm = () => {
               />
             </div>
           </div>
+
+          {/* Documents Section - Only show when editing */}
+          {isEditing && (
+            <div className="form-section">
+              <div className="section-header">
+                <h3>
+                  <FileText size={20} />
+                  Documents
+                </h3>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowDocumentModal(true)}
+                >
+                  <Plus size={16} />
+                  Add Document
+                </button>
+              </div>
+
+              {employeeDocuments.length > 0 ? (
+                <div className="documents-list">
+                  {employeeDocuments.map(doc => (
+                    <div key={doc.id} className="document-item">
+                      <div className="document-info">
+                        <div className="document-title">{doc.title}</div>
+                        <div className="document-details">
+                          <span className="document-type">{doc.documentType}</span>
+                          <span className="document-date">
+                            Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}
+                          </span>
+                          {doc.expiryDate && (
+                            <span className="document-expiry">
+                              Expires: {new Date(doc.expiryDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="document-actions">
+                        <span className={`status-badge ${getStatusColor(doc.status)}`}>
+                          {doc.status}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDocumentDelete(doc.id)}
+                          title="Delete Document"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-documents">
+                  <p>No documents uploaded yet.</p>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setShowDocumentModal(true)}
+                  >
+                    <Upload size={16} />
+                    Upload First Document
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="form-actions">
@@ -354,6 +537,79 @@ const EmployeeForm = () => {
           </button>
         </div>
       </form>
+
+      {/* Document Upload Modal */}
+      {showDocumentModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Upload New Document</h3>
+            <form onSubmit={handleDocumentSubmit}>
+              <div className="form-group">
+                <label>Document Type *</label>
+                <select
+                  value={documentData.documentType}
+                  onChange={(e) => setDocumentData(prev => ({ ...prev, documentType: e.target.value }))}
+                  required
+                  className="form-input"
+                >
+                  <option value="">Select Type</option>
+                  <option value="Contract">Employment Contract</option>
+                  <option value="ID">ID Document</option>
+                  <option value="Certification">Certification</option>
+                  <option value="Training">Training Certificate</option>
+                  <option value="Performance">Performance Review</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Title *</label>
+                <input
+                  type="text"
+                  value={documentData.title}
+                  onChange={(e) => setDocumentData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                  className="form-input"
+                  placeholder="Document title"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Expiry Date</label>
+                <input
+                  type="date"
+                  value={documentData.expiryDate}
+                  onChange={(e) => setDocumentData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>File</label>
+                <input
+                  type="file"
+                  onChange={handleDocumentUpload}
+                  className="form-input"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDocumentModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Upload Document
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

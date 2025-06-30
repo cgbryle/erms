@@ -127,6 +127,72 @@
   color: #c62828;
 }
 
+/* Document-related styles */
+.document-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.document-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.document-status.valid {
+  color: #2e7d32;
+}
+
+.document-status.warning {
+  color: #f57c00;
+}
+
+.document-status.expired {
+  color: #c62828;
+}
+
+.document-status.no-docs {
+  color: #666;
+}
+
+.alert-icon {
+  color: #c62828;
+}
+
+.warning-icon {
+  color: #f57c00;
+}
+
+.document-breakdown {
+  display: flex;
+  gap: 8px;
+  font-size: 0.7rem;
+}
+
+.valid-count {
+  color: #2e7d32;
+  background: #e8f5e8;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.warning-count {
+  color: #f57c00;
+  background: #fff3e0;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.expired-count {
+  color: #c62828;
+  background: #ffebee;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -135,6 +201,16 @@
 .btn-sm {
   padding: 6px 8px;
   font-size: 12px;
+}
+
+.btn-info {
+  background: #17a2b8;
+  color: white;
+  border: none;
+}
+
+.btn-info:hover {
+  background: #138496;
 }
 
 .no-results {
@@ -175,6 +251,11 @@
   color: #666;
 }
 
+.warning-text {
+  color: #f57c00 !important;
+  font-weight: 500;
+}
+
 .modal-actions {
   display: flex;
   gap: 1rem;
@@ -213,7 +294,7 @@
   }
   
   .stats-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .action-buttons {
@@ -221,11 +302,35 @@
   }
   
   .table {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
   
   .table th,
   .table td {
-    padding: 8px 6px;
+    padding: 8px 4px;
   }
+}
+
+/* Employee Profile Modal Styles */
+.profile-modal {
+  max-width: 400px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+}
+.profile-details {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-details div {
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 } 
