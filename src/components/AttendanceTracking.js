@@ -24,6 +24,7 @@ const AttendanceTracking = ({ currentUser }) => {
   const [editForm, setEditForm] = useState(null);
   const [editError, setEditError] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const isEmployee = currentUser?.role === 'employee';
 
@@ -386,26 +387,35 @@ const AttendanceTracking = ({ currentUser }) => {
   }
 
   return (
-    <div className="attendance-tracking">
+    <div className="attendance-tracking" style={{ position: 'relative' }}>
       {/* Employee Profile Card (only for employees) */}
-      <div className="profile-card">
-        <h2>My Profile</h2>
-        <div className="profile-details">
-          <div><strong>Name:</strong> {currentUser?.name || 'N/A'}</div>
-          <div><strong>Email:</strong> {currentUser?.email || 'N/A'}</div>
-          <div><strong>Phone:</strong> {currentUser?.phone || 'N/A'}</div>
-          <div><strong>Address:</strong> {currentUser?.address || 'N/A'}</div>
-          <div><strong>Department:</strong> {currentUser?.department || 'N/A'}</div>
-          <div><strong>Position:</strong> {currentUser?.position || 'N/A'}</div>
-          <div><strong>Hire Date:</strong> {currentUser?.hireDate ? new Date(currentUser.hireDate).toLocaleDateString() : (currentUser?.date_hired ? new Date(currentUser.date_hired).toLocaleDateString() : 'N/A')}</div>
-          <div><strong>Salary:</strong> {currentUser?.salary || 'N/A'}</div>
-          <div><strong>Status:</strong> {currentUser?.status || 'N/A'}</div>
-          {currentUser?.emergencyContact && (
-            <div><strong>Emergency Contact:</strong> {currentUser.emergencyContact.name} ({currentUser.emergencyContact.relationship}) - {currentUser.emergencyContact.phone}</div>
-          )}
+      {isEmployee && (
+        <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
+          <button className="btn btn-primary" onClick={() => setShowProfile((prev) => !prev)}>
+            {showProfile ? 'Hide Profile' : 'View Profile'}
+          </button>
         </div>
-        <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={handleEditProfile}>Edit Profile</button>
-      </div>
+      )}
+      {isEmployee && showProfile && (
+        <div className="profile-card" style={{ marginTop: 56 }}>
+          <h2>My Profile</h2>
+          <div className="profile-details">
+            <div><strong>Name:</strong> {currentUser?.name || 'N/A'}</div>
+            <div><strong>Email:</strong> {currentUser?.email || 'N/A'}</div>
+            <div><strong>Phone:</strong> {currentUser?.phone || 'N/A'}</div>
+            <div><strong>Address:</strong> {currentUser?.address || 'N/A'}</div>
+            <div><strong>Department:</strong> {currentUser?.department || 'N/A'}</div>
+            <div><strong>Position:</strong> {currentUser?.position || 'N/A'}</div>
+            <div><strong>Hire Date:</strong> {currentUser?.hireDate ? new Date(currentUser.hireDate).toLocaleDateString() : (currentUser?.date_hired ? new Date(currentUser.date_hired).toLocaleDateString() : 'N/A')}</div>
+            <div><strong>Salary:</strong> {currentUser?.salary || 'N/A'}</div>
+            <div><strong>Status:</strong> {currentUser?.status || 'N/A'}</div>
+            {currentUser?.emergencyContact && (
+              <div><strong>Emergency Contact:</strong> {currentUser.emergencyContact.name} ({currentUser.emergencyContact.relationship}) - {currentUser.emergencyContact.phone}</div>
+            )}
+          </div>
+          <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={handleEditProfile}>Edit Profile</button>
+        </div>
+      )}
       {/* Edit Profile Modal (only for employees) */}
       {showEditModal && editForm && (
         <div className="modal-overlay">
