@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, FileText, AlertTriangle, Download, Trash2, Plus, Search, User, Calendar } from 'lucide-react';
 import './DocumentManagement.css';
 
-const DocumentManagement = () => {
+const DocumentManagement = ({ currentUser }) => {
   const [documents, setDocuments] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
@@ -23,13 +23,18 @@ const DocumentManagement = () => {
     expiringSoon: 0,
     expiredDocuments: 0
   });
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Fetch documents and employees on component mount
   useEffect(() => {
-    fetchDocuments();
-    fetchEmployees();
-    fetchStats();
-  }, []);
+    if (currentUser?.role === 'employee') {
+      fetchEmployeeDocuments(currentUser.employeeId || currentUser.employeeId || currentUser.id);
+    } else {
+      fetchDocuments();
+      fetchEmployees();
+      fetchStats();
+    }
+  }, [currentUser]);
 
   const fetchDocuments = async () => {
     try {
@@ -62,6 +67,19 @@ const DocumentManagement = () => {
       setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const fetchEmployeeDocuments = async (employeeId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/employees/${employeeId}/documents`);
+      const data = await response.json();
+      setDocuments(Array.isArray(data) ? data : []);
+      setFilteredDocuments(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch employee documents:', error);
+      setDocuments([]);
+      setFilteredDocuments([]);
     }
   };
 
@@ -304,12 +322,35 @@ const DocumentManagement = () => {
                     {doc.status}
                   </span>
                 </td>
-                <td>{doc.fileSize}</td>
+                <td>{doc.fileSize || '-'}</td>
                 <td>
                   <div className="action-buttons">
-                    <button className="btn btn-secondary btn-sm" title="Download">
-                      <Download size={14} />
-                    </button>
+                    {(doc.fileName || '').match(/\.(jpg|jpeg|png)$/i) && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        title="Preview"
+                        onClick={() => {
+                          console.log('Preview image:', `http://localhost:3001/uploads/${doc.fileName}`);
+                          setPreviewImage(`http://localhost:3001/uploads/${doc.fileName}`);
+                        }}
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <FileText size={14} />
+                      </button>
+                    )}
+                    {doc.fileName && (
+                      <a
+                        className="btn btn-secondary btn-sm"
+                        href={`http://localhost:3001/uploads/${doc.fileName}`}
+                        download
+                        title="Download"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Download size={14} />
+                      </a>
+                    )}
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(doc.id)}
@@ -337,20 +378,25 @@ const DocumentManagement = () => {
           <div className="modal">
             <h3>Upload New Document</h3>
             <form onSubmit={handleUploadSubmit}>
-              <div className="form-group">
-                <label>Employee *</label>
-                <select
-                  value={uploadData.employeeId}
-                  onChange={(e) => setUploadData(prev => ({ ...prev, employeeId: e.target.value }))}
-                  required
-                  className="form-input"
-                >
-                  <option value="">Select Employee</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name} - {emp.department}</option>
-                  ))}
-                </select>
-              </div>
+              {currentUser?.role !== 'employee' && (
+                <div className="form-group">
+                  <label>Employee *</label>
+                  <select
+                    value={uploadData.employeeId}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, employeeId: e.target.value }))}
+                    required
+                    className="form-input"
+                  >
+                    <option value="">Select Employee</option>
+                    {employees.map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.name} - {emp.department}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {currentUser?.role === 'employee' && (
+                <input type="hidden" value={currentUser.employeeId || currentUser.id} />
+              )}
 
               <div className="form-group">
                 <label>Document Type *</label>
@@ -415,6 +461,17 @@ const DocumentManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {previewImage && (
+        <div className="modal-overlay" onClick={() => setPreviewImage(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <img src={previewImage} alt="Preview" />
+            <div>
+              <button onClick={() => setPreviewImage(null)}>Close</button>
+            </div>
           </div>
         </div>
       )}

@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, User, Mail, Phone, MapPin, Calendar, DollarSign, FileText, Plus, Upload, Trash2, AlertTriangle } from 'lucide-react';
 import './EmployeeForm.css';
 
-const EmployeeForm = () => {
-  const { id } = useParams();
+const EmployeeForm = ({ selfEdit = false, currentUser = null }) => {
+  const { id: paramId } = useParams();
   const navigate = useNavigate();
+  const id = selfEdit && currentUser ? (currentUser.employeeId || currentUser.id) : paramId;
   const isEditing = !!id;
 
   const [formData, setFormData] = useState({
@@ -34,6 +35,7 @@ const EmployeeForm = () => {
     expiryDate: '',
     file: null
   });
+  const [accountData, setAccountData] = useState({ username: '', password: '' });
 
   // Sample departments for demo
   const departments = [
@@ -133,6 +135,11 @@ const EmployeeForm = () => {
     }));
   };
 
+  const handleAccountChange = (e) => {
+    const { name, value } = e.target;
+    setAccountData(prev => ({ ...prev, [name]: value }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -165,6 +172,7 @@ const EmployeeForm = () => {
           body: JSON.stringify({
             ...formData,
             date_hired: formData.hireDate, // match backend field
+            ...(isEditing ? {} : accountData),
           }),
         });
         if (!response.ok) throw new Error('Failed to save employee');
@@ -523,6 +531,40 @@ const EmployeeForm = () => {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Account Information (only when adding) */}
+          {!isEditing && (
+            <div className="form-section">
+              <h3>
+                <User size={20} />
+                Account Information
+              </h3>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Username</label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={accountData.username}
+                    onChange={handleAccountChange}
+                    className="form-input"
+                    placeholder="Set username for employee login"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={accountData.password}
+                    onChange={handleAccountChange}
+                    className="form-input"
+                    placeholder="Set password for employee login"
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>

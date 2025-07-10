@@ -10,37 +10,24 @@ const Login = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Simple authentication for demo purposes
-    let userObj = null;
-    if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      userObj = {
-        id: 1,
-        name: 'Admin User',
-        role: 'admin',
-        email: 'admin@company.com'
-      };
-    } else if (credentials.username === 'hr' && credentials.password === 'hr123') {
-      userObj = {
-        id: 2,
-        name: 'HR Manager',
-        role: 'hr',
-        email: 'hr@company.com'
-      };
-    } else if (credentials.username === 'employee' && credentials.password === 'emp123') {
-      userObj = {
-        id: 3,
-        name: 'John Employee',
-        role: 'employee',
-        email: 'john@company.com'
-      };
-    }
-    if (userObj) {
+    setError('');
+    try {
+      const response = await fetch('http://localhost:3001/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || 'Login failed');
+        return;
+      }
+      const userObj = await response.json();
       onLogin(userObj);
-    } else {
-      setError('Invalid credentials. Try admin/admin123, hr/hr123, or employee/emp123');
+    } catch (err) {
+      setError('Network error. Please try again.');
     }
   };
 
@@ -105,14 +92,6 @@ const Login = ({ onLogin }) => {
           </button>
         </form>
 
-        <div className="login-help">
-          <h4>Demo Credentials:</h4>
-          <div className="demo-credentials">
-            <div><strong>Admin:</strong> admin / admin123</div>
-            <div><strong>HR:</strong> hr / hr123</div>
-            <div><strong>Employee:</strong> employee / emp123</div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Users, FileText, Calendar, TrendingUp, BookOpen, Shield, BarChart3, LogIn } from 'lucide-react';
+import { Users, FileText, Calendar, TrendingUp, BookOpen, Shield, BarChart3, LogIn, User } from 'lucide-react';
 import './App.css';
 
 // Import components
@@ -66,10 +66,16 @@ function App() {
           <aside className="sidebar">
             <nav className="sidebar-nav">
               {isEmployee ? (
-                <Link to="/attendance" className="nav-item">
-                  <Calendar size={20} />
-                  <span>Attendance</span>
-                </Link>
+                <>
+                  <Link to="/attendance" className="nav-item">
+                    <Calendar size={20} />
+                    <span>Attendance</span>
+                  </Link>
+                  <Link to="/profile" className="nav-item">
+                    <User size={20} />
+                    <span>My Profile</span>
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link to="/" className="nav-item">
@@ -104,13 +110,17 @@ function App() {
           <main className="content">
             <Routes>
               {isEmployee ? (
-                <Route path="*" element={<AttendanceTracking currentUser={currentUser} />} />
+                <>
+                  <Route path="/attendance" element={<AttendanceTracking currentUser={currentUser} />} />
+                  <Route path="/profile" element={<EmployeeForm selfEdit={true} currentUser={currentUser} />} />
+                  <Route path="*" element={<AttendanceTracking currentUser={currentUser} />} />
+                </>
               ) : (
                 <>
                   <Route path="/" element={<EmployeeList />} />
                   <Route path="/add-employee" element={<EmployeeForm />} />
                   <Route path="/edit-employee/:id" element={<EmployeeForm />} />
-                  <Route path="/documents" element={<DocumentManagement />} />
+                  <Route path="/documents" element={<DocumentManagement currentUser={currentUser} />} />
                   <Route path="/attendance" element={<AttendanceTracking currentUser={currentUser} />} />
                   <Route path="/performance" element={<PerformanceManagement />} />
                   <Route path="/training" element={<TrainingDevelopment />} />

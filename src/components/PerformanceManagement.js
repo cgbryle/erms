@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import './PerformanceManagement.css';
 
+const ratingWords = {
+  1: 'Poor',
+  2: 'Fair',
+  3: 'Average',
+  4: 'Good',
+  5: 'Very Good',
+};
+
 const PerformanceManagement = () => {
   const location = useLocation();
   const [reviews, setReviews] = useState([]);
@@ -177,7 +185,7 @@ const PerformanceManagement = () => {
                     <td>{employees.find(e => e.id === r.employeeId)?.name || r.employeeId}</td>
                     <td>{r.reviewer}</td>
                     <td>{r.reviewDate}</td>
-                    <td>{r.rating}</td>
+                    <td>{r.rating} {ratingWords[r.rating] ? `(${ratingWords[r.rating]})` : ''}</td>
                     <td>{r.comments}</td>
                     <td>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(r)}>Edit</button>
@@ -212,6 +220,9 @@ const PerformanceManagement = () => {
             <div className="form-group">
               <label>Rating *</label>
               <input name="rating" type="number" min="1" max="5" value={form.rating} onChange={handleChange} required />
+              <div style={{ fontSize: '0.9em', color: '#555', marginTop: 2 }}>
+                1 = Poor, 2 = Fair, 3 = Average, 4 = Good, 5 = Very Good
+              </div>
             </div>
             <div className="form-group">
               <label>Comments</label>

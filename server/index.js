@@ -6,9 +6,11 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 const port = 3001;
+const bcrypt = require('bcryptjs');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
+console.log('Serving uploads from:', uploadsDir);
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
@@ -58,14 +60,33 @@ app.get('/employees', (req, res) => {
 });
 
 // Add a new employee
-app.post('/employees', (req, res) => {
-  const { name, email, position, date_hired } = req.body;
+app.post('/employees', async (req, res) => {
+  const { name, email, position, date_hired, username, password } = req.body;
   db.query(
     'INSERT INTO employees (name, email, position, date_hired) VALUES (?, ?, ?, ?)',
     [name, email, position, date_hired],
-    (err, result) => {
+    async (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: result.insertId, name, email, position, date_hired });
+      const employeeId = result.insertId;
+      // If username and password are provided, create a user account
+      if (username && password) {
+        try {
+          const salt = await bcrypt.genSalt(10);
+          const password_hash = await bcrypt.hash(password, salt);
+          db.query(
+            'INSERT INTO users (employeeId, username, password_hash, role) VALUES (?, ?, ?, ?)',
+            [employeeId, username, password_hash, 'employee'],
+            (userErr, userResult) => {
+              if (userErr) return res.status(500).json({ error: userErr.message });
+              res.json({ id: employeeId, name, email, position, date_hired, userId: userResult.insertId, username });
+            }
+          );
+        } catch (hashErr) {
+          return res.status(500).json({ error: 'Error hashing password' });
+        }
+      } else {
+        res.json({ id: employeeId, name, email, position, date_hired });
+      }
     }
   );
 });
@@ -573,6 +594,28 @@ app.get('/attendance', (req, res) => {
   db.query('SELECT * FROM attendance', (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(results);
+  });
+});
+
+// User login endpoint
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+  db.query('SELECT u.*, e.name, e.email, e.department, e.position FROM users u JOIN employees e ON u.employeeId = e.id WHERE u.username = ?', [username], async (err, results) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!results || results.length === 0) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    const user = results[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    // Return user info (omit password_hash)
+    const { password_hash, ...userInfo } = user;
+    res.json(userInfo);
   });
 });
 

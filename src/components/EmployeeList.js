@@ -116,16 +116,6 @@ const EmployeeList = () => {
 
   const departments = [...new Set(employees.map(emp => emp.department))];
 
-  const handleViewProfile = (employee) => {
-    setSelectedEmployee(employee);
-    setShowProfileModal(true);
-  };
-
-  const closeProfileModal = () => {
-    setShowProfileModal(false);
-    setSelectedEmployee(null);
-  };
-
   return (
     <div className="employee-list">
       <div className="page-header">
@@ -259,13 +249,6 @@ const EmployeeList = () => {
                         <Eye size={14} />
                       </Link>
                       <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handleViewProfile(employee)}
-                        title="View Profile"
-                      >
-                        <User size={14} />
-                      </button>
-                      <button
                         className="btn btn-success btn-sm"
                         onClick={() => navigate(`/performance?employeeId=${employee.id}`)}
                         title="View Performance"
@@ -320,32 +303,6 @@ const EmployeeList = () => {
               >
                 Delete
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Employee Profile Modal */}
-      {showProfileModal && selectedEmployee && (
-        <div className="modal-overlay">
-          <div className="modal profile-modal">
-            <h3>Employee Profile</h3>
-            <div className="profile-details">
-              <div><strong>Name:</strong> {selectedEmployee.name || 'N/A'}</div>
-              <div><strong>Email:</strong> {selectedEmployee.email || 'N/A'}</div>
-              <div><strong>Phone:</strong> {selectedEmployee.phone || 'N/A'}</div>
-              <div><strong>Address:</strong> {selectedEmployee.address || 'N/A'}</div>
-              <div><strong>Department:</strong> {selectedEmployee.department || 'N/A'}</div>
-              <div><strong>Position:</strong> {selectedEmployee.position || 'N/A'}</div>
-              <div><strong>Hire Date:</strong> {selectedEmployee.hireDate ? new Date(selectedEmployee.hireDate).toLocaleDateString() : (selectedEmployee.date_hired ? new Date(selectedEmployee.date_hired).toLocaleDateString() : 'N/A')}</div>
-              <div><strong>Salary:</strong> {selectedEmployee.salary || 'N/A'}</div>
-              <div><strong>Status:</strong> {selectedEmployee.status || 'N/A'}</div>
-              {selectedEmployee.emergencyContact && (
-                <div><strong>Emergency Contact:</strong> {selectedEmployee.emergencyContact.name} ({selectedEmployee.emergencyContact.relationship}) - {selectedEmployee.emergencyContact.phone}</div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={closeProfileModal}>Close</button>
             </div>
           </div>
         </div>

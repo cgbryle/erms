@@ -114,6 +114,18 @@ CREATE TABLE IF NOT EXISTS skills (
 );
 CREATE INDEX IF NOT EXISTS idx_skill_employeeId ON skills(employeeId);
 
+-- Create users table for authentication
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employeeId INT NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('employee', 'admin') DEFAULT 'employee',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employeeId) REFERENCES employees(id) ON DELETE CASCADE
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_employee_department ON employees(department);
 CREATE INDEX idx_employee_status ON employees(status);
